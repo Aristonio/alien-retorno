@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>ALIEN — retorno da autorização</title>
+<style>
+  :root{color-scheme:light dark}
+  body{font-family:ui-sans-serif,system-ui,"Segoe UI",Roboto,Arial,sans-serif;
+    margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+    background:#eef1f4;color:#1a222c}
+  @media (prefers-color-scheme:dark){body{background:#16212e;color:#e8edf2}}
+  .caixa{max-width:640px;width:92%;background:#fff;border:1px solid #dde3e9;
+    border-radius:10px;padding:28px 32px;box-shadow:0 4px 18px rgba(0,0,0,.06)}
+  @media (prefers-color-scheme:dark){.caixa{background:#1e2c3a;border-color:#2c3c4d}}
+  h1{font-size:18px;margin:0 0 6px}
+  h1 span{color:#0f766e}
+  p{font-size:14px;line-height:1.55;color:#5b6875;margin:8px 0}
+  @media (prefers-color-scheme:dark){p{color:#a7b3bf}}
+  code#codigo{display:block;font-size:20px;font-family:ui-monospace,Consolas,monospace;
+    background:#eef4fb;border:1px dashed #15509b;border-radius:8px;
+    padding:14px 16px;margin:14px 0;word-break:break-all;user-select:all}
+  @media (prefers-color-scheme:dark){code#codigo{background:#152638}}
+  .acoes{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  button,a.btn{font-size:14px;padding:10px 18px;border-radius:6px;cursor:pointer;
+    border:1px solid #c8d1da;background:#fff;color:#1a222c;text-decoration:none}
+  button.p,a.btn.p{background:#0f766e;border-color:#0f766e;color:#fff;font-weight:600}
+  .ok{color:#15803d;font-weight:600}
+  .erro{color:#b42318;font-weight:600}
+  .rodape{font-size:12px;color:#8d97a3;margin-top:18px}
+</style>
+</head>
+<body>
+<div class="caixa">
+  <h1><span>ALIEN</span> — retorno da autorização do Mercado Livre</h1>
+  <div id="conteudo">
+    <p>Esta página só recebe o código da autorização e o entrega ao ALIEN,
+       que roda no seu computador. Nenhum dado fica aqui.</p>
+  </div>
+  <p class="rodape">Larck Store · o código expira em poucos minutos e é de uso único.</p>
+</div>
+<script>
+(function(){
+  var p = new URLSearchParams(location.search);
+  var code = p.get('code'), erro = p.get('error');
+  var alvo = document.getElementById('conteudo');
+  var LOCAL = 'http://127.0.0.1:8765/configuracoes/conexao/retorno?code=';
+  if (erro){
+    alvo.innerHTML = '<p class="erro">O Mercado Livre recusou a autorização: '
+      + erro.replace(/[<>&]/g, '') + '</p>'
+      + '<p>Volte ao ALIEN (tela 8.3) e tente autorizar de novo.</p>';
+    return;
+  }
+  if (!code){
+    alvo.innerHTML += '<p>Nada para entregar agora — abra a autorização a partir '
+      + 'do ALIEN, na tela 8.3 (Configurações → Conexões com marketplaces).</p>';
+    return;
+  }
+  alvo.innerHTML =
+      '<p class="ok">Autorização recebida.</p>'
+    + '<p><b>1.</b> Com o ALIEN aberto, clique para concluir a conexão sozinho:</p>'
+    + '<div class="acoes"><a class="btn p" id="entregar" href="'
+    + LOCAL + encodeURIComponent(code) + '">Conectar no ALIEN</a></div>'
+    + '<p><b>2.</b> Se preferir (ou se o ALIEN não abrir), copie o código e cole '
+    + 'no campo da tela 8.3:</p>'
+    + '<code id="codigo"></code>'
+    + '<div class="acoes"><button id="copiar">Copiar código</button></div>';
+  document.getElementById('codigo').textContent = code;
+  document.getElementById('copiar').addEventListener('click', function(){
+    var b = this;
+    (navigator.clipboard ? navigator.clipboard.writeText(code)
+      : Promise.reject()).then(function(){ b.textContent = 'Copiado ✓'; },
+      function(){
+        var sel = window.getSelection(), r = document.createRange();
+        r.selectNodeContents(document.getElementById('codigo'));
+        sel.removeAllRanges(); sel.addRange(r);
+        b.textContent = 'Selecionado — use Ctrl+C';
+      });
+  });
+})();
+</script>
+</body>
+</html>
