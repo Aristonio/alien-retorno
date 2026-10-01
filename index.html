@@ -33,7 +33,7 @@
 </head>
 <body>
 <div class="caixa">
-  <h1><span>ALIEN</span> — retorno da autorização do Mercado Livre</h1>
+  <h1><span>ALIEN</span> — retorno da autorização</h1>
   <div id="conteudo">
     <p>Esta página só recebe o código da autorização e o entrega ao ALIEN,
        que roda no seu computador. Nenhum dado fica aqui.</p>
@@ -43,11 +43,13 @@
 <script>
 (function(){
   var p = new URLSearchParams(location.search);
-  var code = p.get('code'), erro = p.get('error');
+  var code = p.get('code'), erro = p.get('error'), shopId = p.get('shop_id');
   var alvo = document.getElementById('conteudo');
-  var LOCAL = 'http://127.0.0.1:8765/configuracoes/conexao/retorno?code=';
+  var LOCAL_ML = 'http://127.0.0.1:8765/configuracoes/conexao/retorno?code=';
+  var LOCAL_SHOPEE = 'http://127.0.0.1:8765/configuracoes/conexao/shopee/retorno?code=';
+  var plataforma = shopId ? 'Shopee' : 'Mercado Livre';
   if (erro){
-    alvo.innerHTML = '<p class="erro">O Mercado Livre recusou a autorização: '
+    alvo.innerHTML = '<p class="erro">A ' + plataforma + ' recusou a autorização: '
       + erro.replace(/[<>&]/g, '') + '</p>'
       + '<p>Volte ao ALIEN (tela 8.3) e tente autorizar de novo.</p>';
     return;
@@ -57,15 +59,22 @@
       + 'do ALIEN, na tela 8.3 (Configurações → Conexões com marketplaces).</p>';
     return;
   }
+  var entrega = shopId
+    ? LOCAL_SHOPEE + encodeURIComponent(code)
+      + '&shop_id=' + encodeURIComponent(shopId)
+    : LOCAL_ML + encodeURIComponent(code);
+  var alternativa = shopId
+    ? '<p>Depois de clicar, o ALIEN recebe também o Shop ID e conclui a conexão.</p>'
+    : '<p><b>2.</b> Se preferir (ou se o ALIEN não abrir), copie o código e cole '
+      + 'no campo da tela 8.3:</p><code id="codigo"></code>'
+      + '<div class="acoes"><button id="copiar">Copiar código</button></div>';
   alvo.innerHTML =
       '<p class="ok">Autorização recebida.</p>'
     + '<p><b>1.</b> Com o ALIEN aberto, clique para concluir a conexão sozinho:</p>'
     + '<div class="acoes"><a class="btn p" id="entregar" href="'
-    + LOCAL + encodeURIComponent(code) + '">Conectar no ALIEN</a></div>'
-    + '<p><b>2.</b> Se preferir (ou se o ALIEN não abrir), copie o código e cole '
-    + 'no campo da tela 8.3:</p>'
-    + '<code id="codigo"></code>'
-    + '<div class="acoes"><button id="copiar">Copiar código</button></div>';
+    + entrega + '">Conectar no ALIEN</a></div>'
+    + alternativa;
+  if (shopId) return;
   document.getElementById('codigo').textContent = code;
   document.getElementById('copiar').addEventListener('click', function(){
     var b = this;
